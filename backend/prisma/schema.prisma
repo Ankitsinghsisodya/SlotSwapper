@@ -13,3 +13,89 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  password String?
+  email    String  @unique
+  googleId String? @unique
+  picture  String?
+
+  events   Event[]
+
+    // opposite relation fields for SwapRequest relations
+  swapRequestsSent     SwapRequest[] @relation("SwapRequester")
+  swapRequestsReceived SwapRequest[] @relation("SwapResponder")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id])
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  otp       Int
+  email     String
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+enum EventStatus {
+  BUSY 
+  SWAPPABLE 
+  SWAP_PENDING
+}
+
+model Event {
+  id        Int         @id @default(autoincrement())
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  status    EventStatus @default(BUSY)
+
+  ownerId Int
+  owner   User @relation(fields: [ownerId], references: [id])
+
+    // opposite relation fields for SwapRequest slot relations
+  requesterSwapRequests SwapRequest[] @relation("RequesterSlot")
+  responderSwapRequests SwapRequest[] @relation("ResponderSlot")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([startTime])
+}
+
+enum SwapStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+ model SwapRequest {
+  id               Int        @id @default(autoincrement())
+  requesterId      Int
+  responderId      Int
+  requesterSlotId  Int
+  responderSlotId  Int
+  status           SwapStatus @default(PENDING)
+
+  requester        User       @relation("SwapRequester", fields: [requesterId], references: [id])
+  responder        User       @relation("SwapResponder", fields: [responderId], references: [id])
+  requesterSlot    Event      @relation("RequesterSlot", fields: [requesterSlotId], references: [id])
+  responderSlot    Event      @relation("ResponderSlot", fields: [responderSlotId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requesterId])
+  @@index([responderId])
+  @@index([requesterSlotId])
+  @@index([responderSlotId])
+}
