@@ -19,13 +19,14 @@ interface SwapRequest {
     responderId: number;
     requesterSlotId: number;
     responderSlotId: number;
-    status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
     requester: { id: number; name: string; email: string };
     responder: { id: number; name: string; email: string };
     requesterSlot: Event;
     responderSlot: Event;
     createdAt: string;
 }
+
 
 type ViewType = 'calendar' | 'marketplace' | 'notifications';
 
@@ -51,7 +52,7 @@ function Dashboard() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/signin');
+            navigate('/login');
             return;
         }
         fetchData();
@@ -80,19 +81,32 @@ function Dashboard() {
         } catch (error: any) {
             console.error('Error fetching data:', error);
             if (error.response?.status === 401) {
-                navigate('/signin');
+                navigate('/login');
             }
         } finally {
             setLoading(false);
         }
     };
 
+     const handleDeleteEvent = async (eventId: number) => {
+        if (!confirm('Are you sure you want to delete this event?')) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/events/delete-event/${eventId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchData();
+        } catch (error) {
+            console.error('Error deleting event:', error);
+        }
+    };
     const handleCreateEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
             await axios.post(
-                `${import.meta.env.VITE_SERVER_URI}/api/v1/events`,
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/events/create-event`,
                 newEvent,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -152,7 +166,7 @@ function Dashboard() {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        navigate('/signin');
+        navigate('/login');
     };
 
     const formatDateTime = (dateStr: string) => {
@@ -283,7 +297,7 @@ function Dashboard() {
                     ) : (
                         <>
                             {/* My Calendar View */}
-                            {currentView === 'calendar' && (
+                          {currentView === 'calendar' && (
                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                     {myEvents.length === 0 ? (
                                         <div className="col-span-full text-center py-12">
@@ -297,9 +311,20 @@ function Dashboard() {
                                             <div key={event.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                                                 <div className="flex items-start justify-between mb-3">
                                                     <h3 className="text-lg font-medium text-gray-900">{event.title}</h3>
-                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(event.status)}`}>
-                                                        {event.status.replace('_', ' ')}
-                                                    </span>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(event.status)}`}>
+                                                            {event.status.replace('_', ' ')}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => handleDeleteEvent(event.id)}
+                                                            className="text-red-500 hover:text-red-700 transition-colors"
+                                                            title="Delete event"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2 text-sm text-gray-600 mb-4">
                                                     <div className="flex items-center space-x-2">

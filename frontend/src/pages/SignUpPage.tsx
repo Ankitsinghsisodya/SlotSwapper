@@ -83,9 +83,6 @@ function SignupPage() {
                     name,
                     password,
                     otp,
-                },
-                {
-                    withCredentials: true,
                 }
             );
 

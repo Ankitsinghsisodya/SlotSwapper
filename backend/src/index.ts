@@ -5,10 +5,11 @@ import type { Request, Response } from "express";
 import express, { urlencoded } from "express";
 import authRoute from './routes/auth.route.js'
 import swapRoute from './routes/swap.route.js'
+import eventRoute from './routes/event.route.js'
 
 import { errorHandlingMiddleware } from "./middleware/error.middleware.js";
 
-// dotenv.config('../.env');
+
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/swap', swapRoute)
+app.use('/api/v1/events', eventRoute)
 
 // Error handling middleware should be last
 app.use(errorHandlingMiddleware);

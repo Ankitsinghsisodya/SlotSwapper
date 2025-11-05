@@ -25,9 +25,10 @@ function AuthCallback() {
 
                 const response = await axios.post(backendUrl, { code: authCode });
 
-                const { token } = response.data.data;
+                const  token  = response.data.data;
+                console.log('temp', response.data);
                 localStorage.setItem('token', token);
-                navigate('/');
+                navigate('/')
             } catch (err: any) {
                 console.error('Authentication error:', err);
                 setError(err.message);

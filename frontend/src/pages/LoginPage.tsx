@@ -30,7 +30,7 @@ function SigninPage() {
             );
 
             // if backend returns a fresh token, save it
-            const returnedToken = response.data?.data?.token;
+            const returnedToken = response.data?.data;
             if (returnedToken) {
                 localStorage.setItem("token", returnedToken);
             }
