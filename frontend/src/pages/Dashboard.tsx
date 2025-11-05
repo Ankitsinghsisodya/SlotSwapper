@@ -47,8 +47,16 @@ function Dashboard() {
                     axios.get(`${import.meta.env.VITE_SERVER_URI}/api/v1/swap/swap-incoming-requests`, { headers }),
                     axios.get(`${import.meta.env.VITE_SERVER_URI}/api/v1/swap/swap-outgoing-requests`, { headers }),
                 ]);
+
                 setIncomingRequests(incoming.data.data || []);
                 setOutgoingRequests(outgoing.data.data || []);
+                useEffect(() => {
+                  console.log('incomingRequests changed:', incomingRequests);
+              }, [incomingRequests]);
+
+              useEffect(() => {
+                  console.log('outgoingRequests changed:', outgoingRequests);
+              }, [outgoingRequests]);
             }
         } catch (error: any) {
             console.error('Error fetching data:', error);

@@ -65,10 +65,50 @@ export const deleteEvent = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(403, "Not authorized to delete this event");
   }
 
-  await prisma.event.delete({
-    where: {
-      id: eventId,
-    },
+  // In a transaction: find dependent swap requests, set the opposite slots back to BUSY,
+  // delete the swap requests, then delete the event.
+  await prisma.$transaction(async (tx) => {
+    const affectedSwapRequests = await tx.swapRequest.findMany({
+      where: {
+        OR: [{ requesterSlotId: eventId }, { responderSlotId: eventId }],
+      },
+      select: {
+        id: true,
+        requesterSlotId: true,
+        responderSlotId: true,
+      },
+    });
+
+    // collect the other slots that need to be reverted to BUSY
+    const otherSlotIds: number[] = affectedSwapRequests.map((sr) =>
+      sr.requesterSlotId === eventId ? sr.responderSlotId : sr.requesterSlotId
+    );
+
+    const uniqueOtherSlotIds = Array.from(new Set(otherSlotIds)).filter(Boolean);
+
+    if (uniqueOtherSlotIds.length > 0) {
+      await tx.event.updateMany({
+        where: {
+          id: { in: uniqueOtherSlotIds },
+          status: "SWAP_PENDING",
+        },
+        data: {
+          status: "BUSY",
+        },
+      });
+    }
+
+    // delete swap requests that referenced this event
+    await tx.swapRequest.deleteMany({
+      where: {
+        OR: [{ requesterSlotId: eventId }, { responderSlotId: eventId }],
+      },
+    });
+
+    // finally delete the event
+    await tx.event.delete({
+      where: { id: eventId },
+    });
   });
   return res.json(new ApiResponse(200, {}, "Event deleted successfully"));
 });

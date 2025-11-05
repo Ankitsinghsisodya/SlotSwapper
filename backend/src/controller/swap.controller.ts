@@ -75,7 +75,7 @@ export const swapRequest = asyncHandler(async (req: Request, res: Response) => {
       status: "SWAP_PENDING",
     },
   });
-  
+
 
   return res.json(
     new ApiResponse(200, swapRequest, "Swap request created successfully")
@@ -87,12 +87,28 @@ export const swapIncomingRequests = asyncHandler(
     const userId = req.id;
     if (!userId) throw new Error("User is not logged in");
 
-    const incomingRequests = await prisma.swapRequest.findMany({
+   const incomingRequests = await prisma.swapRequest.findMany({
       where: {
-        responderId: userId,
+        responderId: userId, // was incorrectly using responderId
         status: "PENDING",
       },
+      orderBy: { createdAt: "desc" },
+      include: {
+        requester: {
+          select: { id: true, name: true, email: true },
+        },
+        responder: {
+          select: {  name: true },
+        },
+        requesterSlot: {
+          select: {  title: true, startTime: true, endTime: true, status: true},
+        },
+        responderSlot: {
+          select: {  title: true, startTime: true, endTime: true, status: true },
+        },
+      },
     });
+
 
     return res.json(
       new ApiResponse(
@@ -109,12 +125,28 @@ export const swapOutgoingRequests = asyncHandler(
     const userId = req.id;
     if (!userId) throw new Error("User is not logged in");
 
-    const outgoingRequests = await prisma.swapRequest.findMany({
+   const outgoingRequests = await prisma.swapRequest.findMany({
       where: {
-        requesterId: userId,
+        requesterId: userId, // was incorrectly using responderId
         status: "PENDING",
       },
+      orderBy: { createdAt: "desc" },
+      include: {
+        requester: {
+          select: { id: true, name: true, email: true },
+        },
+        responder: {
+          select: {  name: true },
+        },
+        requesterSlot: {
+          select: {  title: true, startTime: true, endTime: true, status: true},
+        },
+        responderSlot: {
+          select: {  title: true, startTime: true, endTime: true, status: true },
+        },
+      },
     });
+
 
     return res.json(
       new ApiResponse(
@@ -168,6 +200,7 @@ export const swapResponse = asyncHandler(
         },
         data: {
           ownerId: swapRequest.responderId,
+          status: "BUSY",
         },
       });
 
@@ -177,6 +210,7 @@ export const swapResponse = asyncHandler(
         },
         data: {
           ownerId: swapRequest.requesterId,
+          status: "BUSY",
         },
       });
 
