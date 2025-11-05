@@ -1,12 +1,12 @@
 import express from "express";
-import { swappableSlots } from "../controller/swap.controller.js";
+import { swapIncomingRequests, swapOutgoingRequests, swappableSlots, swapRequest } from "../controller/swap.controller.js";
 
 const router = express.Router();
 
 router.get('/swappable-slots',swappableSlots)
-// router.get('/swap-request/:id',)
+router.post('/swap-request',swapRequest)
 // router.get('/swap-response',)
-// router.get('/swap-incoming-requests',)
-// router.get('/swap-outgoing-requests',)
+router.get('/swap-incoming-requests',swapIncomingRequests)
+router.get('/swap-outgoing-requests',swapOutgoingRequests)
 
 export default router;

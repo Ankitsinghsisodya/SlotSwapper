@@ -55,3 +55,31 @@ export const swapRequest = asyncHandler(async (req:Request, res:Response) => {
     return res.json(new ApiResponse(200, swapRequest, "Swap request created successfully"))
 
 })
+
+export const swapIncomingRequests = asyncHandler(async (req:Request, res:Response) => {
+    const userId = req.id;
+    if(!userId) throw new Error("User is not logged in");
+    
+    const incomingRequests = await prisma.swapRequest.findMany({
+        where: {
+            responderId: userId,
+            status: "PENDING"
+        }
+    })
+
+    return res.json(new ApiResponse(200, incomingRequests, "Incoming swap requests fetched successfully"))
+})
+
+export const swapOutgoingRequests = asyncHandler(async (req:Request, res:Response) => {
+    const userId = req.id;
+    if(!userId) throw new Error("User is not logged in");
+    
+    const outgoingRequests = await prisma.swapRequest.findMany({
+        where: {
+            requesterId: userId,
+            status: "PENDING"
+        }
+    })
+
+    return res.json(new ApiResponse(200, outgoingRequests, "Outgoing swap requests fetched successfully"))
+})
