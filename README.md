@@ -490,7 +490,7 @@ Register a new user account.
 }
 ```
 
-**Rate Limit:** 5 requests per hour per IP
+**Rate Limit:** 100 requests per 15 minutes per IP
 
 ---
 
@@ -525,7 +525,7 @@ Verify email with OTP code sent during signup.
 }
 ```
 
-**Rate Limit:** 3 requests per 15 minutes per IP
+**Rate Limit:** 100 requests per 15 minutes per IP
 
 ---
 
@@ -561,7 +561,7 @@ Login with email and password.
 }
 ```
 
-**Rate Limit:** 5 requests per 10 minutes per IP
+**Rate Limit:** 100 requests per 15 minutes per IP
 
 ---
 
@@ -581,6 +581,8 @@ Get Google OAuth authorization URL.
   }
 }
 ```
+
+**Rate Limit:** None
 
 ---
 
@@ -614,6 +616,8 @@ Complete Google OAuth login.
   }
 }
 ```
+
+**Rate Limit:** None
 
 ---
 
@@ -977,23 +981,23 @@ Connect to WebSocket at `ws://localhost:8000` (or your production WS URL).
 
 ### 📋 API Summary Table
 
-| Method | Endpoint                              | Description                   | Auth Required | Rate Limit |
-| ------ | ------------------------------------- | ----------------------------- | ------------- | ---------- |
-| POST   | `/api/v1/auth/signup`                 | Register new user             | ❌            | 5/hour     |
-| POST   | `/api/v1/auth/verifyOTP`              | Verify OTP                    | ❌            | 3/15min    |
-| POST   | `/api/v1/auth/login`                  | Login with credentials        | ❌            | 5/10min    |
-| GET    | `/api/v1/auth/google/url`             | Get Google OAuth URL          | ❌            | 10/10min   |
-| POST   | `/api/v1/auth/google/googleLogin`     | Login with Google             | ❌            | 10/10min   |
-| POST   | `/api/v1/auth/logout`                 | Logout user                   | ✅            | -          |
-| GET    | `/api/v1/events/my-events`            | Get user's events             | ✅            | -          |
-| POST   | `/api/v1/events/create-event`         | Create new event              | ✅            | -          |
-| PUT    | `/api/v1/events/update-event/:id`     | Update event                  | ✅            | -          |
-| DELETE | `/api/v1/events/delete-event/:id`     | Delete event                  | ✅            | -          |
-| GET    | `/api/v1/swap/swappable-slots`        | Get available swappable slots | ✅            | -          |
-| POST   | `/api/v1/swap/swap-request`           | Request slot swap             | ✅            | 20/hour    |
-| GET    | `/api/v1/swap/swap-incoming-requests` | Get incoming swap requests    | ✅            | -          |
-| GET    | `/api/v1/swap/swap-outgoing-requests` | Get outgoing swap requests    | ✅            | -          |
-| POST   | `/api/v1/swap/swap-response`          | Accept/Reject swap            | ✅            | -          |
+| Method | Endpoint                              | Description                   | Auth Required | Rate Limit    |
+| ------ | ------------------------------------- | ----------------------------- | ------------- | ------------- |
+| POST   | `/api/v1/auth/signup`                 | Register new user             | ❌            | 100 req/15min |
+| POST   | `/api/v1/auth/verifyOTP`              | Verify OTP                    | ❌            | 100 req/15min |
+| POST   | `/api/v1/auth/login`                  | Login with credentials        | ❌            | 100 req/15min |
+| GET    | `/api/v1/auth/google/url`             | Get Google OAuth URL          | ❌            | -             |
+| POST   | `/api/v1/auth/google/googleLogin`     | Login with Google             | ❌            | -             |
+| POST   | `/api/v1/auth/logout`                 | Logout user                   | ✅            | -             |
+| GET    | `/api/v1/events/my-events`            | Get user's events             | ✅            | -             |
+| POST   | `/api/v1/events/create-event`         | Create new event              | ✅            | -             |
+| PUT    | `/api/v1/events/update-event/:id`     | Update event                  | ✅            | -             |
+| DELETE | `/api/v1/events/delete-event/:id`     | Delete event                  | ✅            | -             |
+| GET    | `/api/v1/swap/swappable-slots`        | Get available swappable slots | ✅            | -             |
+| POST   | `/api/v1/swap/swap-request`           | Request slot swap             | ✅            | -             |
+| GET    | `/api/v1/swap/swap-incoming-requests` | Get incoming swap requests    | ✅            | -             |
+| GET    | `/api/v1/swap/swap-outgoing-requests` | Get outgoing swap requests    | ✅            | -             |
+| POST   | `/api/v1/swap/swap-response`          | Accept/Reject swap            | ✅            | -             |
 
 ### 📮 Testing with cURL
 
@@ -1036,10 +1040,13 @@ curl -X POST http://localhost:8000/api/v1/swap/swap-request \
 
 Implemented using `express-rate-limit` to prevent abuse:
 
-- **Login/Signup**: 5 attempts per 10 minutes per IP
-- **OTP Verification**: 3 attempts per 15 minutes per IP
-- **Google OAuth**: 10 requests per 10 minutes per IP
-- **Swap Requests**: 20 per hour per authenticated user
+- **Applied to**: Login, Signup, and OTP Verification endpoints
+- **Limit**: 100 requests per 15 minutes per IP address
+- **All other endpoints**: No rate limiting applied
+
+The same rate limiter instance is used across the three protected auth endpoints to provide consistent protection against brute-force attacks while being generous enough for legitimate users.
+
+> **Production Recommendation**: Consider implementing Redis-backed rate limiting for horizontal scaling and more granular per-user limits on sensitive operations.
 
 ### WebSocket Notifications
 
@@ -1320,10 +1327,11 @@ VITE_WS_URI=wss://your-backend.onrender.com
 
 **Solution:**
 
-- Tiered rate limits: strict on auth (5/10min), moderate on swaps (20/hour)
-- Per-IP limits for public endpoints, per-user for authenticated actions
-- Clear error messages when limit exceeded
-- Recommended Redis-backed store for production scalability
+- Implemented single rate limiter: 100 requests per 15 minutes per IP
+- Applied only to authentication endpoints (login, signup, verifyOTP)
+- Generous limit allows legitimate use while preventing brute-force attacks
+- Other endpoints remain unrestricted to avoid blocking normal application usage
+- Recommended Redis-backed store for production scalability and per-user limits
 
 #### 10. **Toast Notification System**
 
