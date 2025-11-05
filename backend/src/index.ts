@@ -9,7 +9,7 @@ import authRoute from "./routes/auth.route.js";
 import eventRoute from "./routes/event.route.js";
 import swapRoute from "./routes/swap.route.js";
 import { initializeWebSocket } from "./websocket/websocket.js";
-
+import { job } from "./jobs/cronJobs.js";
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });

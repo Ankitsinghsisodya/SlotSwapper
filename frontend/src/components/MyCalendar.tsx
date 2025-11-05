@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Event } from '../types';
 import { useToast } from './ui/toast';
 
@@ -21,6 +21,8 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
         startTime: '',
         endTime: '',
     });
+    const [isCreating, setIsCreating] = useState(false);
+    const creatingRef = useRef(false);
     const [editEvent, setEditEvent] = useState({
         title: '',
         startTime: '',
@@ -53,6 +55,11 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
 
     const handleCreateEvent = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Prevent double submissions using a synchronous ref lock
+        if (creatingRef.current) return;
+        creatingRef.current = true;
+        setIsCreating(true);
+
         try {
             const token = localStorage.getItem('token');
             await axios.post(
@@ -69,6 +76,10 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
             onRefresh();
         } catch (error) {
             console.error('Error creating event:', error);
+            toast({ title: 'Error', description: 'Failed to create event. Please try again.', variant: 'destructive' });
+        } finally {
+            creatingRef.current = false;
+            setIsCreating(false);
         }
     };
 
@@ -350,10 +361,20 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                             <div className="flex space-x-3 pt-4">
                                 <button
                                     type="submit"
-                                    disabled={!startTimeConfirmed || !endTimeConfirmed}
-                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    disabled={!startTimeConfirmed || !endTimeConfirmed || isCreating}
+                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                                 >
-                                    Create
+                                    {isCreating ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        'Create'
+                                    )}
                                 </button>
                                 <button
                                     type="button"
