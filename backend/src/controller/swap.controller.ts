@@ -3,6 +3,7 @@ import ApiError from "../utilities/ApiError.js";
 import ApiResponse from "../utilities/ApiResponse.js";
 import asyncHandler from "../utilities/asynchandler.js";
 import { prisma } from "../utilities/prisma.js";
+import { sendNotificationToUser } from "../websocket/websocket.js";
 
 export const swappableSlots = asyncHandler(
   async (req: Request, res: Response) => {
@@ -65,6 +66,17 @@ export const swapRequest = asyncHandler(async (req: Request, res: Response) => {
       responderSlotId: responderSlotId,
       status: "PENDING",
     },
+    include: {
+      requester: {
+        select: { id: true, name: true, email: true },
+      },
+      requesterSlot: {
+        select: { id: true, title: true, startTime: true, endTime: true },
+      },
+      responderSlot: {
+        select: { id: true, title: true, startTime: true, endTime: true },
+      },
+    },
   });
 
   await prisma.event.updateMany({
@@ -76,6 +88,17 @@ export const swapRequest = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
+  // Send WebSocket notification to the responder
+  sendNotificationToUser(responderId, {
+    type: "swap_request",
+    payload: {
+      swapRequestId: swapRequest.id,
+      requesterName: swapRequest.requester.name,
+      requesterSlot: swapRequest.requesterSlot,
+      responderSlot: swapRequest.responderSlot,
+      message: `${swapRequest.requester.name} wants to swap slots with you!`,
+    },
+  });
 
   return res.json(
     new ApiResponse(200, swapRequest, "Swap request created successfully")
@@ -87,7 +110,7 @@ export const swapIncomingRequests = asyncHandler(
     const userId = req.id;
     if (!userId) throw new Error("User is not logged in");
 
-   const incomingRequests = await prisma.swapRequest.findMany({
+    const incomingRequests = await prisma.swapRequest.findMany({
       where: {
         responderId: userId, // was incorrectly using responderId
         status: "PENDING",
@@ -98,17 +121,16 @@ export const swapIncomingRequests = asyncHandler(
           select: { id: true, name: true, email: true },
         },
         responder: {
-          select: {  name: true },
+          select: { name: true },
         },
         requesterSlot: {
-          select: {  title: true, startTime: true, endTime: true, status: true},
+          select: { title: true, startTime: true, endTime: true, status: true },
         },
         responderSlot: {
-          select: {  title: true, startTime: true, endTime: true, status: true },
+          select: { title: true, startTime: true, endTime: true, status: true },
         },
       },
     });
-
 
     return res.json(
       new ApiResponse(
@@ -125,7 +147,7 @@ export const swapOutgoingRequests = asyncHandler(
     const userId = req.id;
     if (!userId) throw new Error("User is not logged in");
 
-   const outgoingRequests = await prisma.swapRequest.findMany({
+    const outgoingRequests = await prisma.swapRequest.findMany({
       where: {
         requesterId: userId, // was incorrectly using responderId
         status: "PENDING",
@@ -136,17 +158,16 @@ export const swapOutgoingRequests = asyncHandler(
           select: { id: true, name: true, email: true },
         },
         responder: {
-          select: {  name: true },
+          select: { name: true },
         },
         requesterSlot: {
-          select: {  title: true, startTime: true, endTime: true, status: true},
+          select: { title: true, startTime: true, endTime: true, status: true },
         },
         responderSlot: {
-          select: {  title: true, startTime: true, endTime: true, status: true },
+          select: { title: true, startTime: true, endTime: true, status: true },
         },
       },
     });
-
 
     return res.json(
       new ApiResponse(
@@ -184,10 +205,20 @@ export const swapResponse = asyncHandler(
         where: {
           id: swapRequest.requesterSlotId,
         },
+        include: {
+          owner: {
+            select: { id: true, name: true },
+          },
+        },
       });
       const responderSlot = await prisma.event.findUnique({
         where: {
           id: swapRequest.responderSlotId,
+        },
+        include: {
+          owner: {
+            select: { id: true, name: true },
+          },
         },
       });
       if (!requesterSlot || !responderSlot) {
@@ -224,6 +255,22 @@ export const swapResponse = asyncHandler(
         },
       });
 
+      // Send WebSocket notification to the requester about successful swap
+      sendNotificationToUser(swapRequest.requesterId, {
+        type: "swap_accepted",
+        payload: {
+          swapRequestId: swapRequest.id,
+          responderName: responderSlot.owner.name,
+          newSlot: {
+            id: responderSlot.id,
+            title: responderSlot.title,
+            startTime: responderSlot.startTime,
+            endTime: responderSlot.endTime,
+          },
+          message: `${responderSlot.owner.name} accepted your swap request!`,
+        },
+      });
+
       return res.json(
         new ApiResponse(
           200,
@@ -232,6 +279,12 @@ export const swapResponse = asyncHandler(
         )
       );
     } else if (response === "REJECT") {
+      // Get requester info for notification
+      const requester = await prisma.user.findUnique({
+        where: { id: swapRequest.requesterId },
+        select: { name: true },
+      });
+
       // Update swap request status
       await prisma.swapRequest.update({
         where: {
@@ -239,6 +292,27 @@ export const swapResponse = asyncHandler(
         },
         data: {
           status: "REJECTED",
+        },
+      });
+
+      // Reset slot statuses back to SWAPPABLE
+      await prisma.event.updateMany({
+        where: {
+          id: {
+            in: [swapRequest.requesterSlotId, swapRequest.responderSlotId],
+          },
+        },
+        data: {
+          status: "SWAPPABLE",
+        },
+      });
+
+      // Send WebSocket notification to the requester about rejection
+      sendNotificationToUser(swapRequest.requesterId, {
+        type: "swap_rejected",
+        payload: {
+          swapRequestId: swapRequest.id,
+          message: `Your swap request was declined.`,
         },
       });
 
