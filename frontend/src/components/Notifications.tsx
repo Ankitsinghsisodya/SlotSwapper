@@ -66,7 +66,9 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                     const requesterSlotTitle = request.requesterSlot?.title ?? 'Untitled slot';
                                     const responderSlotTitle = request.responderSlot?.title ?? 'Untitled slot';
                                     const requesterSlotStart = request.requesterSlot?.startTime ?? '';
+                                    const requesterSlotEnd = request.requesterSlot?.endTime ?? '';
                                     const responderSlotStart = request.responderSlot?.startTime ?? '';
+                                    const responderSlotEnd = request.responderSlot?.endTime ?? '';
 
                                     return (
                                         <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
@@ -85,12 +87,38 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                                 <div className="border border-gray-200 rounded p-3">
                                                     <p className="text-xs text-gray-500 mb-1">They offer:</p>
                                                     <p className="font-medium text-gray-900">{requesterSlotTitle}</p>
-                                                    <p className="text-sm text-gray-600">{requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</p>
+                                                    <div className="space-y-1 mt-2">
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>Start: {requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>End: {requesterSlotEnd ? formatDateTime(requesterSlotEnd) : '—'}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="border border-gray-200 rounded p-3">
                                                     <p className="text-xs text-gray-500 mb-1">For your:</p>
                                                     <p className="font-medium text-gray-900">{responderSlotTitle}</p>
-                                                    <p className="text-sm text-gray-600">{responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</p>
+                                                    <div className="space-y-1 mt-2">
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>Start: {responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>End: {responderSlotEnd ? formatDateTime(responderSlotEnd) : '—'}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             {request.status === 'PENDING' && (
@@ -130,7 +158,9 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                     const requesterSlotTitle = request.requesterSlot?.title ?? 'Untitled slot';
                                     const responderSlotTitle = request.responderSlot?.title ?? 'Untitled slot';
                                     const requesterSlotStart = request.requesterSlot?.startTime ?? '';
+                                    const requesterSlotEnd = request.requesterSlot?.endTime ?? '';
                                     const responderSlotStart = request.responderSlot?.startTime ?? '';
+                                    const responderSlotEnd = request.responderSlot?.endTime ?? '';
 
                                     return (
                                         <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
@@ -152,12 +182,38 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                                 <div className="border border-gray-200 rounded p-3">
                                                     <p className="text-xs text-gray-500 mb-1">You offered:</p>
                                                     <p className="font-medium text-gray-900">{requesterSlotTitle}</p>
-                                                    <p className="text-sm text-gray-600">{requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</p>
+                                                    <div className="space-y-1 mt-2">
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>Start: {requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>End: {requesterSlotEnd ? formatDateTime(requesterSlotEnd) : '—'}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="border border-gray-200 rounded p-3">
                                                     <p className="text-xs text-gray-500 mb-1">For their:</p>
                                                     <p className="font-medium text-gray-900">{responderSlotTitle}</p>
-                                                    <p className="text-sm text-gray-600">{responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</p>
+                                                    <div className="space-y-1 mt-2">
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>Start: {responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span>End: {responderSlotEnd ? formatDateTime(responderSlotEnd) : '—'}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
