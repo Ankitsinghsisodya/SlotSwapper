@@ -17,7 +17,15 @@ const wss = new WebSocketServer({ server });
 // Initialize WebSocket handlers
 initializeWebSocket(wss);
 
-app.use(cors({ origin: process.env.CLIENT_ROOT_URI }));
+app.use(cors({
+  origin: true, // Reflects the requesting origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// app.options('*', cors());
+// app.options('*', cors());
 
 app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
