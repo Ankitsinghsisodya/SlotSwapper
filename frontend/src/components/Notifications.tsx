@@ -23,14 +23,16 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
     const handleSwapResponse = async (requestId: number, accept: boolean) => {
         try {
             const token = localStorage.getItem('token');
+            const responseStr = accept ? 'ACCEPT' : 'REJECT';
             await axios.post(
                 `${import.meta.env.VITE_SERVER_URI}/api/v1/swap/swap-response`,
-                { requestId, accept },
+                { swapRequestId: requestId, response: responseStr },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onRefresh();
         } catch (error) {
             console.error('Error responding to swap:', error);
+            alert('Failed to respond to swap request. Please try again.');
         }
     };
 
@@ -59,49 +61,57 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                     <p className="text-gray-500">No incoming swap requests.</p>
                                 </div>
                             ) : (
-                                incomingRequests.map((request) => (
-                                    <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">
-                                                    <span className="font-medium text-gray-900">{request.requester.name}</span> wants to swap slots
-                                                </p>
-                                                <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString()}</p>
+                                incomingRequests.map((request) => {
+                                    const requesterName = request.requester?.name ?? 'Unknown user';
+                                    const requesterSlotTitle = request.requesterSlot?.title ?? 'Untitled slot';
+                                    const responderSlotTitle = request.responderSlot?.title ?? 'Untitled slot';
+                                    const requesterSlotStart = request.requesterSlot?.startTime ?? '';
+                                    const responderSlotStart = request.responderSlot?.startTime ?? '';
+
+                                    return (
+                                        <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div>
+                                                    <p className="text-sm text-gray-600 mb-1">
+                                                        <span className="font-medium text-gray-900">{requesterName}</span> wants to swap slots
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString()}</p>
+                                                </div>
+                                                <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    {request.status}
+                                                </span>
                                             </div>
-                                            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                {request.status}
-                                            </span>
+                                            <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                                <div className="border border-gray-200 rounded p-3">
+                                                    <p className="text-xs text-gray-500 mb-1">They offer:</p>
+                                                    <p className="font-medium text-gray-900">{requesterSlotTitle}</p>
+                                                    <p className="text-sm text-gray-600">{requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</p>
+                                                </div>
+                                                <div className="border border-gray-200 rounded p-3">
+                                                    <p className="text-xs text-gray-500 mb-1">For your:</p>
+                                                    <p className="font-medium text-gray-900">{responderSlotTitle}</p>
+                                                    <p className="text-sm text-gray-600">{responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</p>
+                                                </div>
+                                            </div>
+                                            {request.status === 'PENDING' && (
+                                                <div className="flex space-x-3">
+                                                    <button
+                                                        onClick={() => handleSwapResponse(request.id, true)}
+                                                        className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                                                    >
+                                                        Accept
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleSwapResponse(request.id, false)}
+                                                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                            <div className="border border-gray-200 rounded p-3">
-                                                <p className="text-xs text-gray-500 mb-1">They offer:</p>
-                                                <p className="font-medium text-gray-900">{request.requesterSlot.title}</p>
-                                                <p className="text-sm text-gray-600">{formatDateTime(request.requesterSlot.startTime)}</p>
-                                            </div>
-                                            <div className="border border-gray-200 rounded p-3">
-                                                <p className="text-xs text-gray-500 mb-1">For your:</p>
-                                                <p className="font-medium text-gray-900">{request.responderSlot.title}</p>
-                                                <p className="text-sm text-gray-600">{formatDateTime(request.responderSlot.startTime)}</p>
-                                            </div>
-                                        </div>
-                                        {request.status === 'PENDING' && (
-                                            <div className="flex space-x-3">
-                                                <button
-                                                    onClick={() => handleSwapResponse(request.id, true)}
-                                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
-                                                >
-                                                    Accept
-                                                </button>
-                                                <button
-                                                    onClick={() => handleSwapResponse(request.id, false)}
-                                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-                                                >
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>
@@ -115,36 +125,44 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                     <p className="text-gray-500">No outgoing swap requests.</p>
                                 </div>
                             ) : (
-                                outgoingRequests.map((request) => (
-                                    <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">
-                                                    Swap request to <span className="font-medium text-gray-900">{request.responder.name}</span>
-                                                </p>
-                                                <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString()}</p>
+                                outgoingRequests.map((request) => {
+                                    const responderName = request.responder?.name ?? 'Unknown user';
+                                    const requesterSlotTitle = request.requesterSlot?.title ?? 'Untitled slot';
+                                    const responderSlotTitle = request.responderSlot?.title ?? 'Untitled slot';
+                                    const requesterSlotStart = request.requesterSlot?.startTime ?? '';
+                                    const responderSlotStart = request.responderSlot?.startTime ?? '';
+
+                                    return (
+                                        <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div>
+                                                    <p className="text-sm text-gray-600 mb-1">
+                                                        Swap request to <span className="font-medium text-gray-900">{responderName}</span>
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString()}</p>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                                    request.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                                                        'bg-red-100 text-red-800'
+                                                    }`}>
+                                                    {request.status}
+                                                </span>
                                             </div>
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                request.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                                                    'bg-red-100 text-red-800'
-                                                }`}>
-                                                {request.status}
-                                            </span>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="border border-gray-200 rounded p-3">
+                                                    <p className="text-xs text-gray-500 mb-1">You offered:</p>
+                                                    <p className="font-medium text-gray-900">{requesterSlotTitle}</p>
+                                                    <p className="text-sm text-gray-600">{requesterSlotStart ? formatDateTime(requesterSlotStart) : '—'}</p>
+                                                </div>
+                                                <div className="border border-gray-200 rounded p-3">
+                                                    <p className="text-xs text-gray-500 mb-1">For their:</p>
+                                                    <p className="font-medium text-gray-900">{responderSlotTitle}</p>
+                                                    <p className="text-sm text-gray-600">{responderSlotStart ? formatDateTime(responderSlotStart) : '—'}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="border border-gray-200 rounded p-3">
-                                                <p className="text-xs text-gray-500 mb-1">You offered:</p>
-                                                <p className="font-medium text-gray-900">{request.requesterSlot.title}</p>
-                                                <p className="text-sm text-gray-600">{formatDateTime(request.requesterSlot.startTime)}</p>
-                                            </div>
-                                            <div className="border border-gray-200 rounded p-3">
-                                                <p className="text-xs text-gray-500 mb-1">For their:</p>
-                                                <p className="font-medium text-gray-900">{request.responderSlot.title}</p>
-                                                <p className="text-sm text-gray-600">{formatDateTime(request.responderSlot.startTime)}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>
