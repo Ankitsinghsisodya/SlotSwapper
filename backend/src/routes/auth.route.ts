@@ -7,12 +7,13 @@ import {
   signup,
   verifyOTP,
 } from "../controller/auth.controller.js";
+import { rateLimitMiddleware } from "../middleware/rateLimit.middleware.js";
 const router = express.Router();
 
-router.post("/login", login);
+router.post("/login", rateLimitMiddleware, login);
 router.post("/logout", logout);
-router.post("/signup", signup);
-router.post("/verifyOTP", verifyOTP);
+router.post("/signup", rateLimitMiddleware,signup);
+router.post("/verifyOTP", rateLimitMiddleware,verifyOTP);
 router.get("/google/url", getGoogleAuthURL);
 router.post("/google/googleLogin", googleLogin);
 
