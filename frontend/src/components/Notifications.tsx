@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { SwapRequest } from '../types';
+import { useToast } from './ui/toast';
 
 interface NotificationsProps {
     incomingRequests: SwapRequest[];
@@ -20,6 +21,8 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
         });
     };
 
+    const { toast } = useToast();
+
     const handleSwapResponse = async (requestId: number, accept: boolean) => {
         try {
             const token = localStorage.getItem('token');
@@ -32,10 +35,13 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
             onRefresh();
         } catch (error) {
             console.error('Error responding to swap:', error);
-            alert('Failed to respond to swap request. Please try again.');
+            toast({
+                title: "Error",
+                description: "Failed to respond to swap request. Please try again.",
+                variant: "destructive"
+            });
         }
     };
-
     return (
         <>
             {/* Header */}

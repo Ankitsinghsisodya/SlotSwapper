@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
 import type { Event } from '../types';
+import { useToast } from './ui/toast';
 
 interface SwapMarketplaceProps {
     slots: Event[];
@@ -10,6 +11,7 @@ interface SwapMarketplaceProps {
 }
 
 export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }: SwapMarketplaceProps) {
+    const { toast } = useToast();
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [selectedSlotForSwap, setSelectedSlotForSwap] = useState<Event | null>(null);
     const [selectedMySlot, setSelectedMySlot] = useState<Event | null>(null);
@@ -31,7 +33,11 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
         // Get responderId from the selected slot's owner
         const responderId = selectedSlotForSwap.ownerId;
         if (!responderId) {
-            alert('Error: Unable to identify slot owner');
+            toast({
+                title: "Error",
+                description: "Unable to identify slot owner",
+                variant: "destructive"
+            });
             return;
         }
 
@@ -49,11 +55,18 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
             setShowSwapModal(false);
             setSelectedSlotForSwap(null);
             setSelectedMySlot(null);
-            alert('Swap request sent!');
+            toast({
+                title: "Success",
+                description: "Swap request sent successfully!"
+            });
             onRefresh();
         } catch (error) {
             console.error('Error requesting swap:', error);
-            alert('Failed to send swap request. Please try again.');
+            toast({
+                title: "Error",
+                description: "Failed to send swap request. Please try again.",
+                variant: "destructive"
+            });
         }
     };
 
