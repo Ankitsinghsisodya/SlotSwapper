@@ -27,7 +27,7 @@ function AuthCallback() {
 
                 const { token } = response.data.data;
                 localStorage.setItem('token', token);
-                navigate('/dashboard');
+                navigate('/');
             } catch (err: any) {
                 console.error('Authentication error:', err);
                 setError(err.message);
