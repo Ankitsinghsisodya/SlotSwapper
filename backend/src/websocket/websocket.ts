@@ -16,13 +16,8 @@ export const initializeWebSocket = (wss: any) => {
         const userId = parsedMessage.payload.userId;
         if (userId) {
           userConnections.set(userId, ws);
-          console.log(`User ${userId} connected to WebSocket`);
-        }
-      }
 
-      // Keep alive ping
-      if (parsedMessage.type === "ping") {
-        ws.send(JSON.stringify({ type: "pong" }));
+        }
       }
     });
 

@@ -1,4 +1,4 @@
-"use client";
+
 import axios from "axios";
 import { useToast } from "../components/ui/toast";
 
@@ -33,7 +33,7 @@ function SignupPage() {
         }
 
         try {
-            const response = await axios.post(
+            await axios.post(
                 `${import.meta.env.VITE_SERVER_URI}/api/v1/auth/signup`,
                 {
                     email,
@@ -76,7 +76,7 @@ function SignupPage() {
         }
 
         try {
-            const response = await axios.post(
+            await axios.post(
                 `${import.meta.env.VITE_SERVER_URI}/api/v1/auth/verifyOTP`,
                 {
                     email,
