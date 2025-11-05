@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
+import dotenv from "dotenv/config";
 import type { Request, Response } from "express";
 import express, { urlencoded } from "express";
 import authRoute from './routes/auth.route.js'
@@ -8,7 +8,7 @@ import swapRoute from './routes/swap.route.js'
 
 import { errorHandlingMiddleware } from "./middleware/error.middleware.js";
 
-dotenv.config();
+// dotenv.config('../.env');
 
 const app = express();
 

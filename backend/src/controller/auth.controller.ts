@@ -134,10 +134,7 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     redirectUri: `${process.env.CLIENT_ROOT_URI}/auth/google/callback`,
   });
-  console.log(
-    "process.env.GOOGLE_CLIENT_SECRET",
-    process.env.GOOGLE_CLIENT_SECRET
-  );
+
   // Get user info from Google
   const googleUser = await axios
     .get(

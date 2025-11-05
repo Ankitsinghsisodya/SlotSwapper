@@ -34,7 +34,7 @@ function SignupPage() {
 
         try {
             const response = await axios.post(
-                `api/auth/signup`,
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/auth/signup`,
                 {
                     email,
                     name,
@@ -77,7 +77,7 @@ function SignupPage() {
 
         try {
             const response = await axios.post(
-                `${import.meta.env.VITE_SERVER_URI}api/auth/verifyOTP`,
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/auth/verifyOTP`,
                 {
                     email,
                     name,
