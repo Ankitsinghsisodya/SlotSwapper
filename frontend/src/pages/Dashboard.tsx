@@ -104,13 +104,7 @@ function Dashboard() {
 
         ws.onclose = () => {
             console.log('WebSocket disconnected');
-            // Clear heartbeat
-            if (heartbeatIntervalRef.current) {
-                clearInterval(heartbeatIntervalRef.current);
-                heartbeatIntervalRef.current = null;
-            }
 
-            // Attempt to reconnect after 3 seconds if we have a userId
             if (userIdRef.current) {
                 console.log('Attempting to reconnect in 3 seconds...');
                 reconnectTimeoutRef.current = window.setTimeout(() => {
@@ -145,12 +139,6 @@ function Dashboard() {
         // Cleanup on unmount
         return () => {
             userIdRef.current = null; // Prevent reconnection on unmount
-            if (heartbeatIntervalRef.current) {
-                clearInterval(heartbeatIntervalRef.current);
-            }
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-            }
             if (wsRef.current) {
                 wsRef.current.close();
             }
