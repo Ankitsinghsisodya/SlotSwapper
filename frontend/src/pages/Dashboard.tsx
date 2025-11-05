@@ -1,14 +1,16 @@
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MyCalendar from '../components/myCalendar'
-import Notifications from '../components/notifications';
-import SwapMarketplace from '../components/swapMarketPlace';
+import MyCalendar from '../components/MyCalendar';
+import Notifications from '../components/Notifications';
+import SwapMarketplace from '../components/SwapMarketplace';
+import { useToast } from '../components/ui/toast';
 import type { Event, SwapRequest } from '../types';
 
 type ViewType = 'calendar' | 'marketplace' | 'notifications';
 
 function Dashboard() {
+    const { toast } = useToast();
     const navigate = useNavigate();
     const [currentView, setCurrentView] = useState<ViewType>('calendar');
     const [myEvents, setMyEvents] = useState<Event[]>([]);
@@ -16,6 +18,144 @@ function Dashboard() {
     const [incomingRequests, setIncomingRequests] = useState<SwapRequest[]>([]);
     const [outgoingRequests, setOutgoingRequests] = useState<SwapRequest[]>([]);
     const [loading, setLoading] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const wsRef = useRef<WebSocket | null>(null);
+    const heartbeatIntervalRef = useRef<number | null>(null);
+    const reconnectTimeoutRef = useRef<number | null>(null);
+    const userIdRef = useRef<number | null>(null);
+
+    // Helper function to decode JWT and get userId
+    const getUserIdFromToken = (token: string): number | null => {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.id || null;
+        } catch (error) {
+            console.error('Error decoding token:', error);
+            return null;
+        }
+    };
+
+    // Function to connect WebSocket
+    const connectWebSocket = (userId: number) => {
+        // Close existing connection if any
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+
+        const wsUrl = import.meta.env.VITE_WS_URI || 'ws://localhost:8000';
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+            // Register user
+            ws.send(JSON.stringify({
+                type: 'register',
+                payload: { userId }
+            }));
+
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const notification = JSON.parse(event.data);
+                console.log('Received notification:', notification);
+
+                // Handle different notification types
+                switch (notification.type) {
+                    case 'swap_request':
+                        toast({
+                            title: "New Swap Request! 🔔",
+                            description: notification.payload.message,
+                            variant: "default",
+                        });
+                        // Increment unread count
+                        setUnreadNotifications(prev => prev + 1);
+                        // Auto-refresh notifications view
+                        fetchData();
+                        break;
+
+                    case 'swap_accepted':
+                        toast({
+                            title: "Swap Accepted! ✅",
+                            description: notification.payload.message,
+                            variant: "default",
+                        });
+                        // Refresh all data
+                        fetchData();
+                        break;
+
+                    case 'swap_rejected':
+                        toast({
+                            title: "Swap Declined ❌",
+                            description: notification.payload.message,
+                            variant: "destructive",
+                        });
+                        fetchData();
+                        break;
+                }
+            } catch (error) {
+                console.error('Error handling WebSocket message:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket disconnected');
+            // Clear heartbeat
+            if (heartbeatIntervalRef.current) {
+                clearInterval(heartbeatIntervalRef.current);
+                heartbeatIntervalRef.current = null;
+            }
+
+            // Attempt to reconnect after 3 seconds if we have a userId
+            if (userIdRef.current) {
+                console.log('Attempting to reconnect in 3 seconds...');
+                reconnectTimeoutRef.current = window.setTimeout(() => {
+                    console.log('Reconnecting...');
+                    connectWebSocket(userIdRef.current!);
+                }, 3000);
+            }
+        };
+
+        wsRef.current = ws;
+    };
+
+    // WebSocket setup
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const userId = getUserIdFromToken(token);
+        if (!userId) {
+            console.error('Could not get userId from token');
+            return;
+        }
+
+        userIdRef.current = userId;
+
+        // Connect WebSocket
+        connectWebSocket(userId);
+
+        // Cleanup on unmount
+        return () => {
+            userIdRef.current = null; // Prevent reconnection on unmount
+            if (heartbeatIntervalRef.current) {
+                clearInterval(heartbeatIntervalRef.current);
+            }
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+            if (wsRef.current) {
+                wsRef.current.close();
+            }
+        };
+    }, [navigate]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -50,13 +190,6 @@ function Dashboard() {
 
                 setIncomingRequests(incoming.data.data || []);
                 setOutgoingRequests(outgoing.data.data || []);
-                useEffect(() => {
-                  console.log('incomingRequests changed:', incomingRequests);
-              }, [incomingRequests]);
-
-              useEffect(() => {
-                  console.log('outgoingRequests changed:', outgoingRequests);
-              }, [outgoingRequests]);
             }
         } catch (error: any) {
             console.error('Error fetching data:', error);
@@ -69,8 +202,32 @@ function Dashboard() {
     };
 
     const handleLogout = () => {
+        // Prevent reconnection
+        userIdRef.current = null;
+
+        // Clear timers
+        if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+        }
+        if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+        }
+
+        // Close WebSocket connection
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+
         localStorage.removeItem('token');
         navigate('/login');
+    };
+
+    const handleViewChange = (view: ViewType) => {
+        setCurrentView(view);
+        // Clear unread notifications when clicking on notifications tab
+        if (view === 'notifications') {
+            setUnreadNotifications(0);
+        }
     };
 
     return (
@@ -88,7 +245,7 @@ function Dashboard() {
 
                 <nav className="flex-1 p-4">
                     <button
-                        onClick={() => setCurrentView('calendar')}
+                        onClick={() => handleViewChange('calendar')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentView === 'calendar'
                             ? 'bg-blue-50 text-[#1a73e8]'
                             : 'text-gray-700 hover:bg-gray-50'
@@ -101,7 +258,7 @@ function Dashboard() {
                     </button>
 
                     <button
-                        onClick={() => setCurrentView('marketplace')}
+                        onClick={() => handleViewChange('marketplace')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentView === 'marketplace'
                             ? 'bg-blue-50 text-[#1a73e8]'
                             : 'text-gray-700 hover:bg-gray-50'
@@ -114,7 +271,7 @@ function Dashboard() {
                     </button>
 
                     <button
-                        onClick={() => setCurrentView('notifications')}
+                        onClick={() => handleViewChange('notifications')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative ${currentView === 'notifications'
                             ? 'bg-blue-50 text-[#1a73e8]'
                             : 'text-gray-700 hover:bg-gray-50'
@@ -124,9 +281,9 @@ function Dashboard() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         <span>Notifications</span>
-                        {incomingRequests.length > 0 && (
+                        {unreadNotifications > 0 && (
                             <span className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                {incomingRequests.length}
+                                {unreadNotifications}
                             </span>
                         )}
                     </button>
