@@ -417,32 +417,32 @@ Configured with:
 
 ## 🚀 Deployment
 
-### Deploy to Render
-
-#### Backend
+### Deploy Backend to Render
 
 1. Create a new Web Service on Render
 2. Connect your GitHub repository
 3. Configure:
-   - **Build Command**: `npm i && npx prisma generate && npm run build`
-   - **Start Command**: `node dist/index.js`
+   - **Build Command**: `npm ci --include=dev && npx prisma generate && npm run build`
+   - **Start Command**: `npx prisma migrate deploy && node dist/index.js`
    - **Root Directory**: `backend`
 4. Add environment variables from `backend/.env`
 5. Add PostgreSQL database
 6. Deploy!
 
-#### Frontend
+### Deploy Frontend to Vercel
 
-1. Create a new Static Site on Render
-2. Connect your GitHub repository
+1. Push your code to GitHub
+2. Import project in [Vercel](https://vercel.com)
 3. Configure:
-   - **Build Command**: `npm i && npm run build`
-   - **Publish Directory**: `dist`
+   - **Framework Preset**: Vite
    - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
 4. Add environment variables:
-   - `VITE_SERVER_URI`: Your backend URL
-   - `VITE_WS_URI`: Your backend WebSocket URL
+   - `VITE_SERVER_URI`: Your backend URL (e.g., `https://your-backend.onrender.com`)
+   - `VITE_WS_URI`: Your backend WebSocket URL (e.g., `wss://your-backend.onrender.com`)
 5. Deploy!
+6. Vercel will automatically deploy on every push to main branch
 
 ### Environment Variables for Production
 
@@ -451,23 +451,11 @@ Update URLs to production values:
 ```env
 # Backend
 SERVER_ROOT_URI="https://your-backend.onrender.com"
-CLIENT_ROOT_URI="https://your-frontend.onrender.com"
+CLIENT_ROOT_URI="https://your-frontend.vercel.app"
 
 # Frontend
 VITE_SERVER_URI=https://your-backend.onrender.com
 VITE_WS_URI=wss://your-backend.onrender.com
-```
-
-## 🧪 Testing
-
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests
-cd frontend
-npm test
 ```
 
 ## 🤝 Contributing
