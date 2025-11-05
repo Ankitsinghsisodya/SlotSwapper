@@ -110,7 +110,7 @@ function SignupPage() {
             setIsLoading(true);
 
             // Get Google OAuth URL from your backend
-            const response = await axios.get(`${import.meta.env.VITE_SERVER_URI}/api/auth/google/url`);
+            const response = await axios.get(`${import.meta.env.VITE_SERVER_URI}/api/v1/auth/google/url`);
             const { authUrl } = response.data.data;
 
             // Redirect to Google OAuth
