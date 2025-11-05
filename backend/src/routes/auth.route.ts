@@ -14,6 +14,6 @@ router.post("/logout", logout);
 router.post("/signup", signup);
 router.post("/verifyOTP", verifyOTP);
 router.get("/google/url", getGoogleAuthURL);
-router.get("/google/callback", googleLogin);
+router.post("/google/googleLogin", googleLogin);
 
 export default router;

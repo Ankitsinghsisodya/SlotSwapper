@@ -26,19 +26,19 @@ app.use(express.json());
 
 
 
-// Error handling middleware should be last
-app.use(errorHandlingMiddleware);
 
 app.get("/", (req: Request, res: Response) => {
-  return res.json({
-    message: "Server is running fine",
-  });
+    return res.json({
+        message: "Server is running fine",
+    });
 });
 
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/swap', swapRoute)
 
+// Error handling middleware should be last
+app.use(errorHandlingMiddleware);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on PORT ${process.env.PORT}`)

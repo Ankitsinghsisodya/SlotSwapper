@@ -103,7 +103,7 @@ export const getGoogleAuthURL = asyncHandler(
     if (!process.env.SERVER_ROOT_URI || !process.env.GOOGLE_CLIENT_ID)
       throw new ApiError(400, "Some fields are missing");
     const options = {
-      redirect_uri: `${process.env.SERVER_ROOT_URI}/api/auth/google/callback`,
+      redirect_uri: `${process.env.CLIENT_ROOT_URI}/auth/google/callback`,
       client_id: process.env.GOOGLE_CLIENT_ID,
       access_type: "offline",
       response_type: "code",
@@ -120,86 +120,75 @@ export const getGoogleAuthURL = asyncHandler(
   }
 );
 
-export const googleLogin = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { code } = req.query;
+export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
+  const { code } = req.body;
 
-    if (!code) {
-      throw new ApiError(400, "Authorization code is required");
-    }
-
-    try {
-      // Get tokens from Google
-      const tokens = await getTokens({
-        code: code as string,
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirectUri: `${process.env.SERVER_ROOT_URI}/api/auth/google/callback`,
-      });
-
-      // Get user info from Google
-      const googleUser = await axios
-        .get(
-          `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokens.access_token}`,
-          {
-            headers: { Authorization: `Bearer ${tokens.id_token}` },
-          }
-        )
-        .then((res) => res.data);
-
-      // Check if user exists in database
-      let user = await prisma.user.findFirst({
-        where: {
-          OR: [{ email: googleUser.email }, { googleId: googleUser.id }],
-        },
-      });
-
-      // If user doesn't exist, create new user
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: googleUser.name,
-            email: googleUser.email,
-            googleId: googleUser.id,
-            picture: googleUser.picture,
-            password: null, // No password for Google users
-          },
-        });
-      } else if (!user.googleId || !user.picture) {
-        // If user exists but doesn't have googleId, update it
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            googleId: googleUser.id,
-            picture: googleUser.picture || user.picture,
-          },
-        });
-      }
-
-      // Create JWT token
-      const payload = {
-        id: user.id,
-      };
-
-      const token = jwt.sign(payload, process.env.JWT_SECRET_KEY!, {
-        expiresIn: "1d",
-      });
-
-      // Set cookie and redirect
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 1 * 24 * 60 * 60 * 1000, // 7 days
-          sameSite: "lax",
-        })
-        .redirect(`${process.env.CLIENT_URL}`);
-    } catch (error) {
-      console.error("Google OAuth error:", error);
-      res.redirect(`${process.env.CLIENT_URL}/signin?error=google_auth_failed`);
-    }
+  if (!code) {
+    throw new ApiError(400, "Authorization code is required");
   }
-);
+
+  // Get tokens from Google
+  const tokens = await getTokens({
+    code: code as string,
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    redirectUri: `${process.env.CLIENT_ROOT_URI}/auth/google/callback`,
+  });
+  console.log(
+    "process.env.GOOGLE_CLIENT_SECRET",
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  // Get user info from Google
+  const googleUser = await axios
+    .get(
+      `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokens.access_token}`,
+      {
+        headers: { Authorization: `Bearer ${tokens.id_token}` },
+      }
+    )
+    .then((res) => res.data);
+
+  // Check if user exists in database
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: googleUser.email }, { googleId: googleUser.id }],
+    },
+  });
+
+  // If user doesn't exist, create new user
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: googleUser.name,
+        email: googleUser.email,
+        googleId: googleUser.id,
+        picture: googleUser.picture,
+        password: null, // No password for Google users
+      },
+    });
+  } else if (!user.googleId || !user.picture) {
+    // If user exists but doesn't have googleId, update it
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleId: googleUser.id,
+        picture: googleUser.picture || user.picture,
+      },
+    });
+  }
+
+  // Create JWT token
+  const payload = {
+    id: user.id,
+  };
+
+  const token = jwt.sign(payload, process.env.JWT_SECRET_KEY!, {
+    expiresIn: "1d",
+  });
+
+  // Set cookie and redirect
+  return res.json(new ApiResponse(200, token, "successful login"));
+});
 
 // Helper function for getting tokens
 async function getTokens({
@@ -234,7 +223,6 @@ async function getTokens({
     throw new Error(error.message);
   }
 }
-
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   return res
