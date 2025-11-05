@@ -27,11 +27,21 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
         try {
             const token = localStorage.getItem('token');
             const responseStr = accept ? 'ACCEPT' : 'REJECT';
-            await axios.post(
+            const res = await axios.post(
                 `${import.meta.env.VITE_SERVER_URI}/api/v1/swap/swap-response`,
                 { swapRequestId: requestId, response: responseStr },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            // Use server-provided message when available, otherwise fall back to a default
+            const serverMessage = res?.data?.message ?? (accept ? 'Swap request accepted.' : 'Swap request rejected.');
+
+            toast({
+                title: accept ? 'Swap Accepted' : 'Swap Rejected',
+                description: serverMessage,
+                variant: accept ? 'default' : 'destructive',
+            });
+
             onRefresh();
         } catch (error) {
             console.error('Error responding to swap:', error);
