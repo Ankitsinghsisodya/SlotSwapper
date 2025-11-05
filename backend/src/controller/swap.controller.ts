@@ -83,3 +83,85 @@ export const swapOutgoingRequests = asyncHandler(async (req:Request, res:Respons
 
     return res.json(new ApiResponse(200, outgoingRequests, "Outgoing swap requests fetched successfully"))
 })
+
+export const swapResponse = asyncHandler(async (req:Request, res:Response) => {
+    const userId = req.id;
+    const {swapRequestId, response} = req.body;
+    if(!userId) throw new Error("User is not logged in");
+    if(!swapRequestId || !response) {
+        throw new ApiError(400,"Fields are missing");
+    }
+    
+    const swapRequest = await prisma.swapRequest.findFirst({
+        where: {
+            id: swapRequestId,
+            responderId: userId,
+            status: "PENDING"
+        }
+    })
+    if(!swapRequest) {
+        throw new ApiError(400, "Invalid swap request");
+    }
+
+    if(response === "ACCEPT") {
+        // Swap the slots
+        const requesterSlot = await prisma.event.findUnique({
+            where: {
+                id: swapRequest.requesterSlotId
+            }
+        })
+        const responderSlot = await prisma.event.findUnique({
+            where: {
+                id: swapRequest.responderSlotId
+            }
+        })
+        if(!requesterSlot || !responderSlot) {
+            throw new ApiError(400, "Invalid slots for swapping");
+        }
+
+        await prisma.event.update({
+            where: {
+                id: requesterSlot.id
+            },
+            data: {
+                ownerId: swapRequest.responderId
+            }
+        })
+
+        await prisma.event.update({
+            where: {
+                id: responderSlot.id
+            },
+            data: {
+                ownerId: swapRequest.requesterId
+            }
+        })
+
+        // Update swap request status
+        await prisma.swapRequest.update({
+            where: {
+                id: swapRequest.id
+            },
+            data: {
+                status: "ACCEPTED"
+            }
+        })
+
+        return res.json(new ApiResponse(200, null, "Swap request accepted and slots swapped successfully"))
+    } else if(response === "REJECT") {
+        // Update swap request status
+        await prisma.swapRequest.update({
+            where: {
+                id: swapRequest.id
+            },
+            data: {
+                status: "REJECTED"
+            }
+        })
+
+        return res.json(new ApiResponse(200, null, "Swap request rejected successfully"))
+    } else {
+        throw new ApiError(400, "Invalid response");
+    }
+    res.json(new ApiResponse(200, null, "Swap response processed successfully"))
+})

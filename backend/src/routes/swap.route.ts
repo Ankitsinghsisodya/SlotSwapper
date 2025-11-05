@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/swappable-slots',swappableSlots)
 router.post('/swap-request',swapRequest)
-// router.get('/swap-response',)
+// router.post('/swap-response',)
 router.get('/swap-incoming-requests',swapIncomingRequests)
 router.get('/swap-outgoing-requests',swapOutgoingRequests)
 
