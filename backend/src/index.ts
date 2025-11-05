@@ -39,6 +39,7 @@ app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/swap', swapRoute)
 app.use('/api/v1/events', eventRoute)
 
+
 // Error handling middleware should be last
 app.use(errorHandlingMiddleware);
 
