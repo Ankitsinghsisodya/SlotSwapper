@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: slotsweeper-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=slotsweeper
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - slotsweeper-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/slotsweeper?schema=public
+    container_name: slotsweeper-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      - PORT=8000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/slotsweeper?schema=public
+      - SERVER_ROOT_URI=http://localhost:8000
+      - CLIENT_ROOT_URI=http://localhost:4173
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - slotsweeper-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_SERVER_URI: http://localhost:8000
+        VITE_WS_URI: ws://localhost:8000
+    container_name: slotsweeper-frontend
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_SERVER_URI=http://localhost:8000
+      - VITE_WS_URI=ws://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - slotsweeper-network
+
+networks:
+  slotsweeper-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

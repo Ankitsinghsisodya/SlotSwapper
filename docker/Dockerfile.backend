@@ -2,12 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-
 COPY backend/package*.json ./
 
-# Clear npm cache and install production dependencies
-
-# Clear npm cache and install production dependencies
 # Clear npm cache and install dependencies
 RUN npm cache clean --force && \
     npm install --legacy-peer-deps --no-audit --no-fund
@@ -15,21 +11,31 @@ RUN npm cache clean --force && \
 # Install TypeScript globally to ensure tsc is available
 RUN npm install -g typescript
 
-
 # Copy everything from backend
 COPY backend/ ./
-
-
 
 # Set DATABASE_URL for Prisma
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
 
 # Expose port
 EXPOSE 8000
 
-RUN npm run build
+# Create a startup script that runs migrations then starts the server
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'set -e' >> /app/start.sh && \
+    echo 'echo "Running Prisma migrations..."' >> /app/start.sh && \
+    echo 'npx prisma migrate deploy' >> /app/start.sh && \
+    echo 'echo "Migrations completed successfully"' >> /app/start.sh && \
+    echo 'echo "Starting server..."' >> /app/start.sh && \
+    echo 'node dist/index.js' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
-# Start server
-CMD ["node", "dist/index.js"]
+# Run the startup script
+CMD ["/bin/sh", "/app/start.sh"]

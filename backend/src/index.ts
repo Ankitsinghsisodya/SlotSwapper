@@ -17,7 +17,7 @@ const wss = new WebSocketServer({ server });
 // Initialize WebSocket handlers
 initializeWebSocket(wss);
 
-app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CLIENT_ROOT_URI }));
 
 app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
