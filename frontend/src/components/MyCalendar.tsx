@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
 import type { Event } from '../types';
+import { useToast } from './ui/toast';
 
 interface MyCalendarProps {
     events: Event[];
@@ -9,8 +10,11 @@ interface MyCalendarProps {
 }
 
 export default function MyCalendar({ events, loading, onRefresh }: MyCalendarProps) {
+    const { toast } = useToast();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<number | null>(null);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
     const [newEvent, setNewEvent] = useState({
         title: '',
@@ -125,17 +129,33 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
         }
     };
 
-    const handleDeleteEvent = async (eventId: number) => {
-        if (!confirm('Are you sure you want to delete this event?')) return;
+    const handleDeleteClick = (eventId: number) => {
+        setEventToDelete(eventId);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!eventToDelete) return;
         try {
             const token = localStorage.getItem('token');
             await axios.delete(
-                `${import.meta.env.VITE_SERVER_URI}/api/v1/events/delete-event/${eventId}`,
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/events/delete-event/${eventToDelete}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            setShowDeleteModal(false);
+            setEventToDelete(null);
+            toast({
+                title: "Event Deleted",
+                description: "The event has been successfully deleted.",
+            });
             onRefresh();
         } catch (error) {
             console.error('Error deleting event:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete event. Please try again.",
+                variant: "destructive"
+            });
         }
     };
 
@@ -206,7 +226,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                             </svg>
                                         </button>
                                         <button
-                                            onClick={() => handleDeleteEvent(event.id)}
+                                            onClick={() => handleDeleteClick(event.id)}
                                             className="text-red-500 hover:text-red-700 transition-colors"
                                             title="Delete event"
                                         >
@@ -351,6 +371,38 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-xl font-medium text-gray-900 mb-2 text-center">Delete Event?</h3>
+                        <p className="text-gray-600 mb-6 text-center">Are you sure you want to delete this event? This action cannot be undone.</p>
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setEventToDelete(null);
+                                }}
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteConfirm}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
