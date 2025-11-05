@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import asyncHandler from "../utilities/asynchandler.js";
-import ApiResponse from "../utilities/ApiResponse.js";
 import ApiError from "../utilities/ApiError.js";
+import ApiResponse from "../utilities/ApiResponse.js";
+import asyncHandler from "../utilities/asynchandler.js";
 import { prisma } from "../utilities/prisma.js";
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
@@ -40,18 +40,20 @@ export const myEvent = asyncHandler(async (req: Request, res: Response) => {
   const ownerId = req.id;
   if (!ownerId) throw new ApiError(400, "User is not logged in");
   const events = await prisma.event.findMany({
-    where:{
-        ownerId
-    }
-  })
-  return res.json(new ApiResponse(200, events, "All the events sent successfully"))
+    where: {
+      ownerId,
+    },
+  });
+  return res.json(
+    new ApiResponse(200, events, "All the events sent successfully")
+  );
 });
 
 export const deleteEvent = asyncHandler(async (req: Request, res: Response) => {
   const ownerId = req.id;
   if (!ownerId) throw new ApiError(400, "User is not logged in");
-  const eventId = Number(req.params.id)
-   if (isNaN(eventId) || eventId <= 0) {
+  const eventId = Number(req.params.id);
+  if (isNaN(eventId) || eventId <= 0) {
     throw new ApiError(400, "Invalid event id");
   }
 
@@ -63,36 +65,67 @@ export const deleteEvent = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(403, "Not authorized to delete this event");
   }
 
-  await prisma.event.delete({ 
-    where:{
-        id:eventId
-    }
-  })
-  return res.json(new ApiResponse(200, {}, "All the events sent successfully"))
+  await prisma.event.delete({
+    where: {
+      id: eventId,
+    },
+  });
+  return res.json(new ApiResponse(200, {}, "Event deleted successfully"));
 });
 
-// export const updateEvent = asyncHandler(async (req:Request, res:Response) => {
-//   const ownerId = req.id;
-//   if (!ownerId) throw new ApiError(400, "User is not logged in");
-//   const eventId = Number(req.params.id)
-//    if (isNaN(eventId) || eventId <= 0) {
-//     throw new ApiError(400, "Invalid event id");
-//   }
+export const updateEvent = asyncHandler(async (req: Request, res: Response) => {
+  const ownerId = req.id;
+  if (!ownerId) throw new ApiError(401, "User is not logged in");
 
-//   const event = await prisma.event.findUnique({ where: { id: eventId } });
-//   if (!event) {
-//     throw new ApiError(404, "Event not found");
-//   }
-//   if (event.ownerId !== ownerId) {
-//     throw new ApiError(403, "Not authorized to delete this event");
-//   }
+  const eventId = Number(req.params.id);
+  if (isNaN(eventId) || eventId <= 0) {
+    throw new ApiError(400, "Invalid event id");
+  }
 
-//   await prisma.event.update({ 
-//     where:{
-//         id:eventId
-//     },data:{
+  const { title, startTime, endTime, status } = req.body;
 
-//     }
-//   })
-//   return res.json(new ApiResponse(200, {}, "All the events sent successfully"))
-// })
+  // Find and verify ownership
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+  if (event.ownerId !== ownerId) {
+    throw new ApiError(403, "Not authorized to update this event");
+  }
+
+  // Build update data object
+  const updateData: any = {};
+
+  if (title !== undefined) updateData.title = title;
+  if (status !== undefined) updateData.status = status;
+
+  if (startTime !== undefined) {
+    const start = new Date(startTime);
+    if (isNaN(start.getTime())) {
+      throw new ApiError(400, "Invalid startTime format");
+    }
+    updateData.startTime = start;
+  }
+
+  if (endTime !== undefined) {
+    const end = new Date(endTime);
+    if (isNaN(end.getTime())) {
+      throw new ApiError(400, "Invalid endTime format");
+    }
+    updateData.endTime = end;
+  }
+
+  // Validate start < end if both are being updated or one exists
+  const finalStart = updateData.startTime || event.startTime;
+  const finalEnd = updateData.endTime || event.endTime;
+  if (finalStart >= finalEnd) {
+    throw new ApiError(400, "startTime must be before endTime");
+  }
+
+  const updated = await prisma.event.update({
+    where: { id: eventId },
+    data: updateData,
+  });
+
+  return res.json(new ApiResponse(200, updated, "Event updated successfully"));
+});

@@ -40,10 +40,18 @@ function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showSwapModal, setShowSwapModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedSlotForSwap, setSelectedSlotForSwap] = useState<Event | null>(null);
+    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
 
     // Form states
     const [newEvent, setNewEvent] = useState({
+        title: '',
+        startTime: '',
+        endTime: '',
+    });
+
+    const [editEvent, setEditEvent] = useState({
         title: '',
         startTime: '',
         endTime: '',
@@ -88,7 +96,7 @@ function Dashboard() {
         }
     };
 
-     const handleDeleteEvent = async (eventId: number) => {
+    const handleDeleteEvent = async (eventId: number) => {
         if (!confirm('Are you sure you want to delete this event?')) return;
         try {
             const token = localStorage.getItem('token');
@@ -115,6 +123,40 @@ function Dashboard() {
             fetchData();
         } catch (error) {
             console.error('Error creating event:', error);
+        }
+    };
+
+    const handleEditClick = (event: Event) => {
+        setEditingEvent(event);
+        // Format dates for datetime-local input (YYYY-MM-DDTHH:mm)
+        const formatForInput = (dateStr: string) => {
+            const date = new Date(dateStr);
+            return date.toISOString().slice(0, 16);
+        };
+        setEditEvent({
+            title: event.title,
+            startTime: formatForInput(event.startTime),
+            endTime: formatForInput(event.endTime),
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingEvent) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `${import.meta.env.VITE_SERVER_URI}/api/v1/events/update-event/${editingEvent.id}`,
+                editEvent,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setShowEditModal(false);
+            setEditingEvent(null);
+            setEditEvent({ title: '', startTime: '', endTime: '' });
+            fetchData();
+        } catch (error) {
+            console.error('Error updating event:', error);
         }
     };
 
@@ -206,8 +248,8 @@ function Dashboard() {
                     <button
                         onClick={() => setCurrentView('calendar')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentView === 'calendar'
-                                ? 'bg-blue-50 text-[#1a73e8]'
-                                : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-blue-50 text-[#1a73e8]'
+                            : 'text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,8 +261,8 @@ function Dashboard() {
                     <button
                         onClick={() => setCurrentView('marketplace')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentView === 'marketplace'
-                                ? 'bg-blue-50 text-[#1a73e8]'
-                                : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-blue-50 text-[#1a73e8]'
+                            : 'text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -232,8 +274,8 @@ function Dashboard() {
                     <button
                         onClick={() => setCurrentView('notifications')}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors relative ${currentView === 'notifications'
-                                ? 'bg-blue-50 text-[#1a73e8]'
-                                : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-blue-50 text-[#1a73e8]'
+                            : 'text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +339,7 @@ function Dashboard() {
                     ) : (
                         <>
                             {/* My Calendar View */}
-                          {currentView === 'calendar' && (
+                            {currentView === 'calendar' && (
                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                     {myEvents.length === 0 ? (
                                         <div className="col-span-full text-center py-12">
@@ -315,6 +357,15 @@ function Dashboard() {
                                                         <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(event.status)}`}>
                                                             {event.status.replace('_', ' ')}
                                                         </span>
+                                                        <button
+                                                            onClick={() => handleEditClick(event)}
+                                                            className="text-blue-500 hover:text-blue-700 transition-colors"
+                                                            title="Edit event"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
                                                         <button
                                                             onClick={() => handleDeleteEvent(event.id)}
                                                             className="text-red-500 hover:text-red-700 transition-colors"
@@ -484,8 +535,8 @@ function Dashboard() {
                                                                 <p className="text-xs text-gray-500">{new Date(request.createdAt).toLocaleString()}</p>
                                                             </div>
                                                             <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    request.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                                                                        'bg-red-100 text-red-800'
+                                                                request.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                                                                    'bg-red-100 text-red-800'
                                                                 }`}>
                                                                 {request.status}
                                                             </span>
@@ -561,6 +612,66 @@ function Dashboard() {
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Event Modal */}
+            {showEditModal && editingEvent && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <h3 className="text-xl font-medium text-gray-900 mb-4">Edit Event</h3>
+                        <form onSubmit={handleUpdateEvent} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editEvent.title}
+                                    onChange={(e) => setEditEvent({ ...editEvent, title: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent"
+                                    placeholder="Team Meeting"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={editEvent.startTime}
+                                    onChange={(e) => setEditEvent({ ...editEvent, startTime: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={editEvent.endTime}
+                                    onChange={(e) => setEditEvent({ ...editEvent, endTime: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent"
+                                />
+                            </div>
+                            <div className="flex space-x-3 pt-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                                >
+                                    Update
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowEditModal(false);
+                                        setEditingEvent(null);
+                                    }}
                                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                                 >
                                     Cancel
