@@ -138,7 +138,7 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                                         setSelectedSlotForSwap(slot);
                                         setShowSwapModal(true);
                                     }}
-                                    className="w-full px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                                    className="w-full px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium cursor-pointer"
                                 >
                                     Request Swap
                                 </button>
@@ -167,7 +167,7 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                                     <button
                                         key={event.id}
                                         onClick={() => setSelectedMySlot(event)}
-                                        className={`w-full text-left p-4 border-2 rounded-lg transition-all ${selectedMySlot?.id === event.id
+                                        className={`w-full text-left p-4 border-2 rounded-lg transition-all cursor-pointer ${selectedMySlot?.id === event.id
                                             ? 'border-[#1a73e8] bg-blue-50 shadow-md'
                                             : 'border-gray-200 hover:border-[#1a73e8] hover:bg-blue-50'
                                             }`}
@@ -191,7 +191,7 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                             <button
                                 onClick={handleRequestSwap}
                                 disabled={!selectedMySlot || isRequesting}
-                                className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                                className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
                             >
                                 {isRequesting ? (
                                     <>
@@ -211,7 +211,7 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                                     setSelectedSlotForSwap(null);
                                     setSelectedMySlot(null);
                                 }}
-                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
                             >
                                 Cancel
                             </button>

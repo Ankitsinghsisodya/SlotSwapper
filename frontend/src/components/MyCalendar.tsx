@@ -192,7 +192,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                 <h2 className="text-2xl font-normal text-gray-800">My Calendar</h2>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                    className="flex items-center space-x-2 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium cursor-pointer"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -229,7 +229,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         </span>
                                         <button
                                             onClick={() => handleEditClick(event)}
-                                            className="text-blue-500 hover:text-blue-700 transition-colors"
+                                            className="text-blue-500 hover:text-blue-700 transition-colors cursor-pointer"
                                             title="Edit event"
                                         >
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +238,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         </button>
                                         <button
                                             onClick={() => handleDeleteClick(event.id)}
-                                            className="text-red-500 hover:text-red-700 transition-colors"
+                                            className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
                                             title="Delete event"
                                         >
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,7 +264,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                 {event.status !== 'SWAP_PENDING' && (
                                     <button
                                         onClick={() => handleToggleSwappable(event.id, event.status)}
-                                        className="w-full px-4 py-2 border border-[#1a73e8] text-[#1a73e8] rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                                        className="w-full px-4 py-2 border border-[#1a73e8] text-[#1a73e8] rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium cursor-pointer"
                                     >
                                         {event.status === 'BUSY' ? 'Make Swappable' : 'Mark as Busy'}
                                     </button>
@@ -307,7 +307,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                             type="button"
                                             onClick={handleConfirmStartTime}
                                             disabled={!tempStartTime}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer"
                                         >
                                             OK
                                         </button>
@@ -318,7 +318,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         <button
                                             type="button"
                                             onClick={handleEditStartTime}
-                                            className="text-[#1a73e8] hover:text-[#1557b0] text-sm font-medium"
+                                            className="text-[#1a73e8] hover:text-[#1557b0] text-sm font-medium cursor-pointer"
                                         >
                                             Edit
                                         </button>
@@ -340,7 +340,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                             type="button"
                                             onClick={handleConfirmEndTime}
                                             disabled={!tempEndTime}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer"
                                         >
                                             OK
                                         </button>
@@ -351,7 +351,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         <button
                                             type="button"
                                             onClick={handleEditEndTime}
-                                            className="text-[#1a73e8] hover:text-[#1557b0] text-sm font-medium"
+                                            className="text-[#1a73e8] hover:text-[#1557b0] text-sm font-medium cursor-pointer"
                                         >
                                             Edit
                                         </button>
@@ -362,7 +362,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                 <button
                                     type="submit"
                                     disabled={!startTimeConfirmed || !endTimeConfirmed || isCreating}
-                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
                                 >
                                     {isCreating ? (
                                         <>
@@ -386,7 +386,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         setTempStartTime('');
                                         setTempEndTime('');
                                     }}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
                                 >
                                     Cancel
                                 </button>
@@ -413,13 +413,13 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                     setShowDeleteModal(false);
                                     setEventToDelete(null);
                                 }}
-                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteConfirm}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium cursor-pointer"
                             >
                                 Delete
                             </button>
@@ -468,7 +468,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                             <div className="flex space-x-3 pt-4">
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                                    className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium cursor-pointer"
                                 >
                                     Update
                                 </button>
@@ -478,7 +478,7 @@ export default function MyCalendar({ events, loading, onRefresh }: MyCalendarPro
                                         setShowEditModal(false);
                                         setEditingEvent(null);
                                     }}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
                                 >
                                     Cancel
                                 </button>

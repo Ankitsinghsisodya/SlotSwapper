@@ -141,13 +141,13 @@ export default function Notifications({ incomingRequests, outgoingRequests, load
                                                 <div className="flex space-x-3">
                                                     <button
                                                         onClick={() => handleSwapResponse(request.id, true)}
-                                                        className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium"
+                                                        className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium cursor-pointer"
                                                     >
                                                         Accept
                                                     </button>
                                                     <button
                                                         onClick={() => handleSwapResponse(request.id, false)}
-                                                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
                                                     >
                                                         Reject
                                                     </button>
