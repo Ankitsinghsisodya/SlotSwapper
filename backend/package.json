@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest",
-    "dev": "tsc -b && nodemon ./dist/index.js"
+    "dev": "tsc -b && nodemon ./dist/index.js",
+    "build": "npx prisma generate && tsc -b"
   },
   "keywords": [],
   "author": "",
