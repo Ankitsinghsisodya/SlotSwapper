@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Event } from '../types';
 import { useToast } from './ui/toast';
 
@@ -15,6 +15,8 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [selectedSlotForSwap, setSelectedSlotForSwap] = useState<Event | null>(null);
     const [selectedMySlot, setSelectedMySlot] = useState<Event | null>(null);
+    const [isRequesting, setIsRequesting] = useState(false);
+    const requestingRef = useRef(false);
 
     const formatDateTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -29,6 +31,10 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
 
     const handleRequestSwap = async () => {
         if (!selectedSlotForSwap || !selectedMySlot) return;
+        // Prevent double submissions
+        if (requestingRef.current) return;
+        requestingRef.current = true;
+        setIsRequesting(true);
 
         // Get responderId from the selected slot's owner
         const responderId = selectedSlotForSwap.ownerId;
@@ -67,6 +73,10 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                 description: "Failed to send swap request. Please try again.",
                 variant: "destructive"
             });
+        }
+        finally {
+            requestingRef.current = false;
+            setIsRequesting(false);
         }
     };
 
@@ -180,10 +190,20 @@ export default function SwapMarketplace({ slots, myEvents, loading, onRefresh }:
                         <div className="flex space-x-3">
                             <button
                                 onClick={handleRequestSwap}
-                                disabled={!selectedMySlot}
-                                className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                disabled={!selectedMySlot || isRequesting}
+                                className="flex-1 px-4 py-2 bg-[#1a73e8] text-white rounded-lg hover:bg-[#1557b0] transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                             >
-                                Confirm Swap Request
+                                {isRequesting ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        Sending...
+                                    </>
+                                ) : (
+                                    'Confirm Swap Request'
+                                )}
                             </button>
                             <button
                                 onClick={() => {
