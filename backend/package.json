@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "vitest",
-    "dev": "tsc -b && nodemon ./dist/index.js",
+    "dev": "tsc -b && nodemon ./dist/bin.js",
     "build": "npx prisma generate && tsc -b",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/bin.js"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +23,7 @@
     "@types/node": "^24.10.0",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.3",
+    "@types/supertest": "^6.0.3",
     "@types/ws": "^8.18.1",
     "axios": "^1.13.1",
     "bcrypt": "^6.0.0",
@@ -38,6 +39,11 @@
     "nodemailer": "^7.0.10",
     "nodemon": "^3.1.10",
     "prisma": "^6.18.0",
+    "supertest": "^7.1.4",
+    "vitest-mock-extended": "^3.1.0",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
