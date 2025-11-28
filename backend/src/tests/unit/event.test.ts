@@ -35,9 +35,9 @@ describe("Event Controller - Integration Tests", () => {
     authToken = generateTestToken();
   });
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  // beforeEach(() => {
+  //   vi.clearAllMocks();
+  // });
 
   afterAll(() => {
     server.close();
