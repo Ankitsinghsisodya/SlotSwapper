@@ -60,7 +60,7 @@ function SignupPage() {
                             <div className="ml-3">
                                 <h3 className="text-sm font-medium text-amber-800">Email Sign Up Temporarily Unavailable</h3>
                                 <p className="mt-1 text-xs text-amber-700">
-                                    Due to hosting restrictions on Render (SMTP ports are blocked), email/OTP verification is currently unavailable. 
+                                    Due to hosting restrictions on Render (SMTP ports are blocked), email/OTP verification is currently unavailable.
                                     Please use <strong>Google Sign In</strong> to create your account.
                                 </p>
                             </div>
