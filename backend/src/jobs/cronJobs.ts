@@ -17,7 +17,7 @@ const job = new CronJob(
         },
       });
 
-  await prisma.event.deleteMan({
+  await prisma.event.deleteMany({
         where:{
           endTime:{
             lt: Date.now()
