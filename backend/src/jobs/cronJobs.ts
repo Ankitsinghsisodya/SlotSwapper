@@ -17,13 +17,13 @@ const job = new CronJob(
         },
       });
 
-      const deletedEvents = await prisma.event.deleteMan({
+  await prisma.event.deleteMan({
         where:{
           endTime:{
             lt: Date.now()
           }
         }
-      });
+      })
       await prisma.event.deleteMany({
         where: {
           endTime: {
