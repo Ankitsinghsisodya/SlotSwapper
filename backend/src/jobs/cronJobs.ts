@@ -17,20 +17,14 @@ const job = new CronJob(
         },
       });
 
-  await prisma.event.deleteMany({
+  const event = await prisma.event.deleteMany({
         where:{
           endTime:{
             lt: Date()
           }
         }
       })
-      await prisma.event.deleteMany({
-        where: {
-          endTime: {
-            lt: fiveMinutesAgo,
-          },
-        },
-      });
+      console.log('ankit is great');
     } catch (error) {
       console.log("error in the cronejob ", error);
     }
