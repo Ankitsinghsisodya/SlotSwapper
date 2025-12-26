@@ -20,7 +20,7 @@ const job = new CronJob(
   await prisma.event.deleteMany({
         where:{
           endTime:{
-            lt: Date.now()
+            lt: Date()
           }
         }
       })
