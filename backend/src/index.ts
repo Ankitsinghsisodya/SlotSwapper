@@ -37,6 +37,15 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+// Health check endpoint to prevent cold starts on Render
+app.get("/health", (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/swap", swapRoute);
 app.use("/api/v1/events", eventRoute);
