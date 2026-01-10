@@ -2,7 +2,7 @@ import { CronJob } from "cron";
 import { prisma } from "../utilities/prisma.js";
 
 const job = new CronJob(
-  "0 0 * * *",
+  "*/5 * * * *", // Run every 5 minutes
   async function () {
     try {
       const fiveMinutesAgo = new Date();
@@ -17,14 +17,18 @@ const job = new CronJob(
         },
       });
 
-  const event = await prisma.event.deleteMany({
-        where:{
-          endTime:{
-            lt: Date()
-          }
-        }
-      })
-      console.log('ankit is great');
+      // Delete events that ended more than 5 minutes ago
+      const deletedEvents = await prisma.event.deleteMany({
+        where: {
+          endTime: {
+            lt: fiveMinutesAgo,
+          },
+        },
+      });
+
+      console.log(
+        `Cleanup completed: ${deletedOTPs.count} OTPs and ${deletedEvents.count} events deleted`
+      );
     } catch (error) {
       console.log("error in the cronejob ", error);
     }

@@ -1,20 +1,30 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import request from "supertest";
 import jwt from "jsonwebtoken";
+import request from "supertest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import type { Event } from "../../generated/prisma/client.js";
 import { server } from "../../index.js";
 import { prisma } from "../../utilities/prisma.js";
-import type { Event } from "../../generated/prisma/client.js";
 
 // Mock the prisma client
 vi.mock("../../utilities/prisma.js");
 
-
 const TEST_USER_ID = 1;
-const TEST_SECRET = process.env.JWT_SECRET || "test-secret";
+const TEST_SECRET = "test-secret";
+
+// Set the JWT_SECRET_KEY env variable for tests to match auth middleware
+process.env.JWT_SECRET_KEY = TEST_SECRET;
+
 const generateTestToken = (userId: number = TEST_USER_ID) => {
   return jwt.sign({ id: userId }, TEST_SECRET, { expiresIn: "1h" });
 };
-
 
 const createMockEvent = (overrides: Partial<Event> = {}): Event => ({
   id: 1,
@@ -35,9 +45,13 @@ describe("Event Controller - Integration Tests", () => {
     authToken = generateTestToken();
   });
 
-  // beforeEach(() => {
-  //   vi.clearAllMocks();
-  // });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock user lookup for auth middleware
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
+      id: TEST_USER_ID,
+    } as any);
+  });
 
   afterAll(() => {
     server.close();
@@ -111,7 +125,9 @@ describe("Event Controller - Integration Tests", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(/startTime must be before endTime/i);
+      expect(response.body.message).toMatch(
+        /startTime must be before endTime/i
+      );
     });
 
     it("should return 401 without authorization header", async () => {
@@ -244,7 +260,9 @@ describe("Event Controller - Integration Tests", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(/startTime must be before endTime/i);
+      expect(response.body.message).toMatch(
+        /startTime must be before endTime/i
+      );
     });
   });
 
